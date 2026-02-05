@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TimeClock Plus to WPS Payroll Converter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #dbeafe;
+      --success: #059669;
+      --success-hover: #047857;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+      --white: #ffffff;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+      --radius: 8px;
+      --radius-lg: 12px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--gray-50);
+      color: var(--gray-800);
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    /* Header */
+    .header {
+      margin-bottom: 24px;
+    }
+
+    .header h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 4px;
+    }
+
+    .header p {
+      font-size: 14px;
+      color: var(--gray-500);
+    }
+
+    /* Controls Panel */
+    .controls-panel {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    /* Drop Zone */
+    .drop-zone {
+      border: 2px dashed var(--gray-300);
+      border-radius: var(--radius-lg);
+      padding: 32px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: var(--gray-50);
+      margin-bottom: 20px;
+    }
+
+    .drop-zone:hover {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    .drop-zone.dragover {
+      border-color: var(--primary);
+      background: var(--primary-light);
+      transform: scale(1.01);
+    }
+
+    .drop-zone-icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 12px;
+      color: var(--gray-400);
+    }
+
+    .drop-zone-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--gray-700);
+      margin-bottom: 4px;
+    }
+
+    .drop-zone-subtitle {
+      font-size: 13px;
+      color: var(--gray-500);
+    }
+
+    /* Buttons */
+    .button-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      border-radius: var(--radius);
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: var(--white);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--primary-hover);
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: var(--white);
+    }
+
+    .btn-success:hover:not(:disabled) {
+      background: var(--success-hover);
+    }
+
+    .btn-secondary {
+      background: var(--white);
+      color: var(--gray-700);
+      border: 1px solid var(--gray-300);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: var(--gray-50);
+      border-color: var(--gray-400);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Status */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      background: var(--gray-50);
+      border-radius: var(--radius);
+      font-size: 13px;
+      color: var(--gray-600);
+    }
+
+    .status-bar.success {
+      background: #ecfdf5;
+      color: #065f46;
+    }
+
+    .status-bar svg {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+    }
+
+    /* Timesheet Container */
+    .timesheet-container {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .timesheet-header {
+      background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
+      color: var(--white);
+      padding: 24px 32px;
+      text-align: center;
+    }
+
+    .timesheet-header .org-name {
+      font-size: 13px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      opacity: 0.8;
+      margin-bottom: 4px;
+    }
+
+    .timesheet-header .title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .timesheet-header .subtitle {
+      font-size: 16px;
+      font-weight: 500;
+      opacity: 0.9;
+    }
+
+    .period-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .period-label {
+      font-size: 14px;
+      color: var(--gray-600);
+    }
+
+    .period-value {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--gray-800);
+    }
+
+    /* Table */
+    .table-wrapper {
+      overflow-x: auto;
+    }
+
+    .timesheet-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 900px;
+    }
+
+    .timesheet-table thead {
+      background: var(--gray-100);
+    }
+
+    .timesheet-table th {
+      padding: 14px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--gray-600);
+      text-align: left;
+      border-bottom: 2px solid var(--gray-200);
+      white-space: nowrap;
+    }
+
+    .timesheet-table th.center {
+      text-align: center;
+    }
+
+    .timesheet-table td {
+      padding: 12px 16px;
+      font-size: 14px;
+      border-bottom: 1px solid var(--gray-100);
+      vertical-align: middle;
+    }
+
+    .timesheet-table tbody tr:hover {
+      background: var(--gray-50);
+    }
+
+    .timesheet-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Column Widths */
+    .col-checkbox { width: 48px; text-align: center; }
+    .col-name { min-width: 200px; }
+    .col-title { min-width: 160px; }
+    .col-hours { width: 100px; text-align: center; }
+    .col-notes { min-width: 180px; }
+
+    /* Employee Name Cell */
+    .employee-cell {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .employee-cell input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: var(--primary);
+    }
+
+    .employee-name {
+      font-weight: 500;
+      color: var(--gray-800);
+    }
+
+    .employee-title {
+      color: var(--gray-500);
+      font-size: 13px;
+    }
+
+    /* Hours Input */
+    .hours-input {
+      width: 72px;
+      padding: 8px 10px;
+      font-size: 14px;
+      font-family: inherit;
+      text-align: right;
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius);
+      background: var(--white);
+      transition: all 0.15s ease;
+    }
+
+    .hours-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-light);
+    }
+
+    .hours-input::placeholder {
+      color: var(--gray-400);
+    }
+
+    /* Notes Textarea */
+    .notes-input {
+      width: 100%;
+      min-width: 160px;
+      padding: 8px 10px;
+      font-size: 13px;
+      font-family: inherit;
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius);
+      background: var(--white);
+      resize: vertical;
+      min-height: 36px;
+      transition: all 0.15s ease;
+    }
+
+    .notes-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-light);
+    }
+
+    .notes-input::placeholder {
+      color: var(--gray-400);
+    }
+
+    /* Sign-off Section */
+    .signoff-section {
+      padding: 24px;
+      background: var(--gray-50);
+      border-top: 1px solid var(--gray-200);
+    }
+
+    .signoff-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .signoff-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .signoff-label {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--gray-700);
+      min-width: 100px;
+    }
+
+    .signoff-input {
+      flex: 1;
+      max-width: 360px;
+      padding: 10px 12px;
+      font-size: 14px;
+      font-family: inherit;
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius);
+      background: var(--white);
+      transition: all 0.15s ease;
+    }
+
+    .signoff-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-light);
+    }
+
+    /* Footer */
+    .footer {
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid var(--gray-200);
+      text-align: center;
+      font-size: 13px;
+      color: var(--gray-500);
+    }
+
+    .footer a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .container {
+        padding: 16px;
+      }
+
+      .button-group {
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .period-bar {
+        flex-direction: column;
+        gap: 4px;
+        text-align: center;
+      }
+
+      .signoff-row {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .signoff-input {
+        max-width: 100%;
+      }
+    }
+
+    /* Hidden file input */
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <h1>TimeClock Plus to WPS Payroll Converter</h1>
+      <p>Convert TimeClock Plus Payroll Detail reports to Worcester Public Schools 6-Hour Drivers Time Sheets</p>
+    </header>
+
+    <!-- Controls Panel -->
+    <div class="controls-panel">
+      <!-- Drop Zone -->
+      <div class="drop-zone" id="dropZone">
+        <svg class="drop-zone-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+        </svg>
+        <div class="drop-zone-title">Drop TimeClock Plus HTML file here</div>
+        <div class="drop-zone-subtitle">or click to browse for a Payroll Detail report</div>
+        <input type="file" id="fileInput" class="hidden" accept=".html,.htm,text/html">
+      </div>
+
+      <!-- Export Buttons -->
+      <div class="button-group">
+        <button class="btn btn-primary" id="exportWps" disabled>
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          Export WPS CSV
+        </button>
+        <button class="btn btn-primary" id="exportWpsPretty" disabled>
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          Export Formatted Excel
+        </button>
+        <button class="btn btn-success" id="exportEib" disabled>
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
+          </svg>
+          Export Workday EIB
+        </button>
+        <button class="btn btn-secondary" id="resetBtn">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          Reset to Demo
+        </button>
+      </div>
+
+      <!-- Status Bar -->
+      <div class="status-bar" id="statusBar">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <span id="statusText">Loaded demo data. Upload a TimeClock Plus report to get started.</span>
+      </div>
+    </div>
+
+    <!-- Timesheet -->
+    <div class="timesheet-container">
+      <div class="timesheet-header">
+        <div class="org-name">Worcester Public Schools</div>
+        <div class="title">WORCESTER PUBLIC SCHOOLS</div>
+        <div class="subtitle">6-Hour Drivers Time Sheet</div>
+      </div>
+      
+      <div class="period-bar">
+        <span class="period-label">Period Ending:</span>
+        <span class="period-value" id="periodDisplay">Loading...</span>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="timesheet-table">
+          <thead id="tableHead"></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+
+      <div class="signoff-section">
+        <div class="signoff-row">
+          <span class="signoff-label">Certification:</span>
+          <span style="color: var(--gray-600); font-size: 14px;">I certify that this time slip is correct.</span>
+        </div>
+        <div class="signoff-row">
+          <span class="signoff-label">Supervisor:</span>
+          <input type="text" class="signoff-input" id="supervisorName" placeholder="Enter supervisor name">
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>Worcester Public Schools Payroll Conversion Tool</p>
+    </footer>
+  </div>
+
+<script>
+// Demo data
+const demo = {"periodEnd": "2026-01-31", "weekdays": [{"date": "2026-01-26", "md": "1/26", "label": "26-Jan"}, {"date": "2026-01-27", "md": "1/27", "label": "27-Jan"}, {"date": "2026-01-28", "md": "1/28", "label": "28-Jan"}, {"date": "2026-01-29", "md": "1/29", "label": "29-Jan"}, {"date": "2026-01-30", "md": "1/30", "label": "30-Jan"}], "rows": [{"name": "Abban, Eric", "rawName": "Eric Abban", "days": {"1/26": "", "1/27": "", "1/28": 10.84, "1/29": 11.02, "1/30": ""}, "note": ""}, {"name": "Abban, Sarah", "rawName": "Sarah Abban", "days": {"1/26": "", "1/27": "", "1/28": 10.62, "1/29": 8.94, "1/30": ""}, "note": ""}, {"name": "Acevedo, Jessica", "rawName": "Jessica Acevedo", "days": {"1/26": "", "1/27": "", "1/28": 10.93, "1/29": 10.8, "1/30": ""}, "note": ""}, {"name": "Adolphe, Juan", "rawName": "Juan Adolphe", "days": {"1/26": "", "1/27": "", "1/28": 10.38, "1/29": 8.87, "1/30": ""}, "note": ""}, {"name": "Adorno, Ezequiel", "rawName": "Ezequiel Adorno", "days": {"1/26": "", "1/27": "", "1/28": 9.9, "1/29": 9.04, "1/30": ""}, "note": ""}, {"name": "Afolabi, Nadia", "rawName": "Nadia Afolabi", "days": {"1/26": "", "1/27": "", "1/28": 11.38, "1/29": 9.11, "1/30": ""}, "note": ""}, {"name": "Africa, Robino", "rawName": "Robino Africa", "days": {"1/26": "", "1/27": "", "1/28": 11.35, "1/29": 8.07, "1/30": ""}, "note": ""}, {"name": "Aguiar, Angelica", "rawName": "Angelica Aguiar", "days": {"1/26": "", "1/27": "", "1/28": 6.92, "1/29": "", "1/30": ""}, "note": ""}, {"name": "Aguilar, Leonel", "rawName": "Leonel Aguilar", "days": {"1/26": "", "1/27": "", "1/28": 10.6, "1/29": 12.92, "1/30": ""}, "note": ""}, {"name": "Aguirre, Elda", "rawName": "Elda Aguirre", "days": {"1/26": "", "1/27": "", "1/28": 12.15, "1/29": 10.75, "1/30": ""}, "note": ""}, {"name": "Alba, Jenny", "rawName": "Jenny Alba", "days": {"1/26": "", "1/27": "", "1/28": "", "1/29": 9.22, "1/30": ""}, "note": ""}, {"name": "Alba, Onelly", "rawName": "Onelly Alba", "days": {"1/26": "", "1/27": "", "1/28": 6.82, "1/29": 6.62, "1/30": ""}, "note": ""}, {"name": "Perez, Yuly Alfonso", "rawName": "Yuly Alfonso Perez", "days": {"1/26": "", "1/27": "", "1/28": 11.4, "1/29": 10.13, "1/30": ""}, "note": ""}, {"name": "Alvarado, Carmelo", "rawName": "Carmelo Alvarado", "days": {"1/26": "", "1/27": "", "1/28": 9.74, "1/29": 9.43, "1/30": ""}, "note": ""}, {"name": "Alvarenga, Ena", "rawName": "Ena Alvarenga", "days": {"1/26": "", "1/27": "", "1/28": 10.47, "1/29": 9.53, "1/30": ""}, "note": ""}, {"name": "Amantea, Mary Kathryn", "rawName": "Mary Kathryn Amantea", "days": {"1/26": "", "1/27": "", "1/28": 11.41, "1/29": "", "1/30": ""}, "note": ""}, {"name": "Ameur, Mohammed", "rawName": "Mohammed Ameur", "days": {"1/26": 6.65, "1/27": 5.53, "1/28": 12.38, "1/29": 9.6, "1/30": ""}, "note": ""}, {"name": "Andino, Keila", "rawName": "Keila Andino", "days": {"1/26": "", "1/27": "", "1/28": 8.0, "1/29": 6.89, "1/30": ""}, "note": ""}, {"name": "Ansah-Attah, Derrick", "rawName": "Derrick Ansah-Attah", "days": {"1/26": "", "1/27": "", "1/28": 11.95, "1/29": 11.4, "1/30": ""}, "note": ""}, {"name": "Anziani, Santa", "rawName": "Santa Anziani", "days": {"1/26": "", "1/27": "", "1/28": "", "1/29": 10.85, "1/30": ""}, "note": ""}, {"name": "Aponte, Adrianna", "rawName": "Adrianna Aponte", "days": {"1/26": "", "1/27": "", "1/28": 10.28, "1/29": 6.82, "1/30": ""}, "note": ""}, {"name": "Archambault, Chelsea", "rawName": "Chelsea Archambault", "days": {"1/26": "", "1/27": "", "1/28": 10.38, "1/29": 9.45, "1/30": ""}, "note": ""}, {"name": "Archambault, Lynn", "rawName": "Lynn Archambault", "days": {"1/26": "", "1/27": "", "1/28": 8.38, "1/29": "", "1/30": ""}, "note": ""}, {"name": "Arevalo, Veronica", "rawName": "Veronica Arevalo", "days": {"1/26": "", "1/27": "", "1/28": 10.05, "1/29": 9.85, "1/30": ""}, "note": ""}, {"name": "Arrell, Susan", "rawName": "Susan Arrell", "days": {"1/26": "", "1/27": "", "1/28": 10.1, "1/29": 8.44, "1/30": ""}, "note": ""}, {"name": "Atchue, Matthew", "rawName": "Matthew Atchue", "days": {"1/26": "", "1/27": "", "1/28": 7.18, "1/29": 7.75, "1/30": ""}, "note": ""}, {"name": "Augustin, Nasha", "rawName": "Nasha Augustin", "days": {"1/26": "", "1/27": "", "1/28": 9.44, "1/29": 7.25, "1/30": ""}, "note": ""}, {"name": "Avushka, Nikollaq", "rawName": "Nikollaq Avushka", "days": {"1/26": "", "1/27": "", "1/28": 11.38, "1/29": 9.53, "1/30": ""}, "note": ""}, {"name": "Ayala, Juan", "rawName": "Juan Ayala", "days": {"1/26": "", "1/27": "", "1/28": 10.89, "1/29": 10.72, "1/30": ""}, "note": ""}, {"name": "Bailey, Diane", "rawName": "Diane Bailey", "days": {"1/26": "", "1/27": "", "1/28": 11.25, "1/29": 9.05, "1/30": ""}, "note": ""}]};
+
+// Give demo rows a title
+if (demo && Array.isArray(demo.rows)) {
+  demo.rows.forEach(r => { if (!r.title) r.title = '110-Mid Size Driver'; });
+}
+
+// Global state
+window._model = demo;
+
+// Format period end date
+function fmtPeriodEnd(iso) {
+  if (!iso) return "N/A";
+  const d = new Date(iso + "T00:00:00");
+  return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
+}
+
+// Build the table grid
+function buildGrid(model) {
+  const thead = document.getElementById("tableHead");
+  const tbody = document.getElementById("tableBody");
+  const periodDisplay = document.getElementById("periodDisplay");
+  
+  thead.innerHTML = "";
+  tbody.innerHTML = "";
+  periodDisplay.textContent = fmtPeriodEnd(model.periodEnd);
+
+  const mdCols = (model.weekdays || []).map(w => w.md);
+  const lblCols = (model.weekdays || []).map(w => w.label);
+
+  // Build header row
+  const headerRow = document.createElement("tr");
+  headerRow.innerHTML = `
+    <th class="col-checkbox center"></th>
+    <th class="col-name">Employee Name</th>
+    <th class="col-title">Title</th>
+    ${lblCols.map(lbl => `<th class="col-hours center">${lbl}</th>`).join('')}
+    <th class="col-notes">Notes</th>
+  `;
+  thead.appendChild(headerRow);
+
+  // Build data rows
+  for (const r of (model.rows || [])) {
+    const safeName = (r.name || "").replace(/"/g, "&quot;");
+    const note = (r.note || "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+    const tr = document.createElement("tr");
+    
+    // Checkbox cell
+    const checkCell = document.createElement("td");
+    checkCell.className = "col-checkbox";
+    checkCell.innerHTML = `<input type="checkbox" aria-label="Reviewed ${safeName}">`;
+    tr.appendChild(checkCell);
+
+    // Employee name cell
+    const nameCell = document.createElement("td");
+    nameCell.className = "col-name";
+    nameCell.innerHTML = `<span class="employee-name">${safeName}</span>`;
+    tr.appendChild(nameCell);
+
+    // Title cell
+    const titleCell = document.createElement("td");
+    titleCell.className = "col-title";
+    titleCell.innerHTML = `<span class="employee-title">${(r.title || "").replace(/"/g, "&quot;")}</span>`;
+    tr.appendChild(titleCell);
+
+    // Hours cells
+    for (let i = 0; i < 5; i++) {
+      const md = mdCols[i] || "";
+      const valRaw = (r.days && md && r.days[md] !== undefined) ? r.days[md] : "";
+      const hasVal = (valRaw !== "" && valRaw !== 0 && valRaw !== null && valRaw !== undefined);
+      const display = hasVal ? Number(valRaw).toFixed(2) : "";
+      
+      const hoursCell = document.createElement("td");
+      hoursCell.className = "col-hours";
+      hoursCell.innerHTML = `<input class="hours-input" type="number" step="0.01" min="0" value="${display}" data-hours-for="${safeName}" data-md="${md}" placeholder="0.00">`;
+      tr.appendChild(hoursCell);
+    }
+
+    // Notes cell
+    const notesCell = document.createElement("td");
+    notesCell.className = "col-notes";
+    notesCell.innerHTML = `<textarea class="notes-input" data-note-for="${safeName}" placeholder="Add notes...">${note}</textarea>`;
+    tr.appendChild(notesCell);
+
+    tbody.appendChild(tr);
+  }
+
+  // Enable export buttons
+  document.getElementById("exportWps").disabled = false;
+  document.getElementById("exportWpsPretty").disabled = false;
+  document.getElementById("exportEib").disabled = false;
+}
+
+// Get current state from the form
+function currentState() {
+  const tbody = document.getElementById("tableBody");
+  const mdCols = (window._model?.weekdays || []).map(w => w.md);
+  const trs = Array.from(tbody.querySelectorAll("tr"));
+  const out = [];
+
+  for (const tr of trs) {
+    const tds = tr.querySelectorAll("td");
+    if (!tds.length) continue;
+
+    const name = (tds[1]?.innerText || "").trim();
+    const title = (tds[2]?.innerText || "").trim();
+    const noteEl = tr.querySelector("textarea[data-note-for]");
+    const note = noteEl ? noteEl.value : "";
+
+    const days = {};
+    const hoursInputs = tr.querySelectorAll("input.hours-input");
+    for (let i = 0; i < 5; i++) {
+      const md = mdCols[i];
+      const inp = hoursInputs[i];
+      const raw = inp ? inp.value.trim() : "";
+      const val = raw ? Number(raw) : "";
+      days[md] = (raw !== "" && val > 0) ? val : "";
+    }
+    out.push({ name, title, note, days });
+  }
+
+  const supervisor = document.getElementById("supervisorName")?.value || "";
+  return { mdCols, rows: out, supervisor };
+}
+
+// Download CSV
+function downloadCsv(filename, text) {
+  const blob = new Blob([text], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// Download HTML
+function downloadHtml(filename, htmlText) {
+  const blob = new Blob([htmlText], { type: "text/html;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// Export WPS Template CSV
+function exportWpsTemplateCsv() {
+  const st = currentState();
+  const header = ["", "Full Name (Surname First)", "Title",
+    st.mdCols[0] || "", "", st.mdCols[1] || "", "", st.mdCols[2] || "", "", st.mdCols[3] || "", "", st.mdCols[4] || "",
+    "Notes"
+  ];
+  const lines = [];
+  lines.push(["", "Worcester Public Schools"].map(x => `"${String(x).replace(/"/g, '""')}"`).join(","));
+  lines.push(header.map(x => `"${String(x).replace(/"/g, '""')}"`).join(","));
+
+  for (const r of st.rows) {
+    const vals = [
+      "",
+      r.name,
+      (r.title || ""),
+      r.days[st.mdCols[0]] === "" ? "" : Number(r.days[st.mdCols[0]]).toFixed(2),
+      "",
+      r.days[st.mdCols[1]] === "" ? "" : Number(r.days[st.mdCols[1]]).toFixed(2),
+      "",
+      r.days[st.mdCols[2]] === "" ? "" : Number(r.days[st.mdCols[2]]).toFixed(2),
+      "",
+      r.days[st.mdCols[3]] === "" ? "" : Number(r.days[st.mdCols[3]]).toFixed(2),
+      "",
+      r.days[st.mdCols[4]] === "" ? "" : Number(r.days[st.mdCols[4]]).toFixed(2),
+      r.note || ""
+    ];
+    lines.push(vals.map(x => `"${String(x).replace(/"/g, '""')}"`).join(","));
+  }
+
+  lines.push(["", "I certify that this time slip is correct:"].map(x => `"${x}"`).join(","));
+  lines.push(["", "Supervisor", st.supervisor || ""].map(x => `"${String(x).replace(/"/g, '""')}"`).join(","));
+
+  downloadCsv("wps_6hour_drivers_timesheet_template.csv", lines.join("\n"));
+  updateStatus("Exported WPS Template CSV successfully!", true);
+}
+
+// Export formatted Excel (HTML)
+function exportWpsTemplateFormatted() {
+  const st = currentState();
+  const title1 = "Worcester Public Schools";
+  const title2 = "WORCESTER PUBLIC SCHOOLS";
+  const title3 = "6-HOUR DRIVERS TIME SHEET";
+  const period = fmtPeriodEnd(window._model?.periodEnd || "");
+
+  const cols = [
+    "Full Name (Surname First)",
+    "Title",
+    st.mdCols[0] || "", st.mdCols[1] || "", st.mdCols[2] || "", st.mdCols[3] || "", st.mdCols[4] || "",
+    "Notes"
+  ];
+
+  const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+  const rowHtml = st.rows.map((r, i) => {
+    const zebra = i % 2 === 0 ? "#ffffff" : "#f3f6fb";
+    const cell = (v, align = "center") => `<td style="border:1px solid #2e2e2e; padding:6px 8px; text-align:${align}; background:${zebra}; font-size:14px;">${esc(v)}</td>`;
+    const hoursCell = (v) => {
+      const val = (v === "" || v === null || v === undefined) ? "" : Number(v).toFixed(2);
+      return `<td style="border:1px solid #2e2e2e; padding:6px 8px; text-align:center; background:${zebra}; font-size:14px;">${esc(val)}</td>`;
+    };
+    return `<tr>` +
+      cell(r.name, "left") +
+      cell(r.title || "", "left") +
+      hoursCell(r.days[st.mdCols[0]]) +
+      hoursCell(r.days[st.mdCols[1]]) +
+      hoursCell(r.days[st.mdCols[2]]) +
+      hoursCell(r.days[st.mdCols[3]]) +
+      hoursCell(r.days[st.mdCols[4]]) +
+      cell(r.note || "", "left") +
+      `</tr>`;
+  }).join("\n");
+
+  const htmlDoc = `<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>WPS 6-Hour Drivers Time Sheet</title>
+<style>
+  body{font-family:Arial, Helvetica, sans-serif; margin:18px;}
+  .wrap{max-width:1200px; margin:0 auto;}
+  .hdr1{font-size:18px; font-weight:700; text-align:center; margin:0 0 6px 0;}
+  .hdr2{font-size:28px; font-weight:700; text-align:center; margin:0; letter-spacing:0.4px;}
+  .hdr3{font-size:24px; font-weight:700; text-align:center; margin:6px 0 14px 0;}
+  .period{font-size:18px; font-weight:700; margin:8px 0 10px 0;}
+  table{border-collapse:collapse; width:100%; border:2px solid #1f1f1f;}
+  th{border:1px solid #2e2e2e; padding:8px; background:#e8eef9; font-size:16px;}
+  .namecol{width:320px; text-align:left;}
+  .daycol{width:120px;}
+  .notescol{width:360px; text-align:left;}
+  .sign{margin-top:18px; font-size:14px;}
+  .line{display:inline-block; min-width:340px; border-bottom:1px solid #000; height:18px; vertical-align:bottom;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hdr1">${esc(title1)}</div>
+  <div class="hdr2">${esc(title2)}</div>
+  <div class="hdr3">${esc(title3)}</div>
+  <div class="period">For the Period Ending: ${esc(period)}</div>
+  <table>
+    <thead>
+      <tr>
+        <th class="namecol">${esc(cols[0])}</th>
+        <th class="namecol">${esc(cols[1])}</th>
+        <th class="daycol">${esc(cols[2])}</th>
+        <th class="daycol">${esc(cols[3])}</th>
+        <th class="daycol">${esc(cols[4])}</th>
+        <th class="daycol">${esc(cols[5])}</th>
+        <th class="daycol">${esc(cols[6])}</th>
+        <th class="notescol">${esc(cols[7])}</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rowHtml}
+    </tbody>
+  </table>
+  <div class="sign">
+    <div style="margin-top:14px; font-weight:700;">I certify that this time slip is correct:</div>
+    <div style="margin-top:10px;"><span style="font-weight:700;">Supervisor:</span> ${esc(st.supervisor || "")}</div>
+  </div>
+</div>
+</body>
+</html>`;
+
+  downloadHtml("wps_6hour_drivers_timesheet_formatted.xls", htmlDoc);
+  updateStatus("Exported Formatted Excel successfully!", true);
+}
+
+// Export Workday EIB CSV
+function exportEibCsv() {
+  const st = currentState();
+  const header = ["Employee", "Date", "Hours", "Comment"];
+  const lines = [header.join(",")];
+  const year = (window._model?.periodEnd ? new Date(window._model.periodEnd + "T00:00:00").getFullYear() : new Date().getFullYear());
+
+  for (const r of st.rows) {
+    for (const md of st.mdCols) {
+      const v = r.days[md];
+      if (v === "" || v === 0 || v === null || v === undefined) continue;
+      const [m, d] = md.split("/").map(Number);
+      const iso = new Date(year, m - 1, d).toISOString().slice(0, 10);
+      const row = [r.name, iso, Number(v).toFixed(2), r.note || ""];
+      lines.push(row.map(x => `"${String(x).replace(/"/g, '""')}"`).join(","));
+    }
+  }
+  downloadCsv("workday_eib_export.csv", lines.join("\n"));
+  updateStatus("Exported Workday EIB CSV successfully!", true);
+}
+
+// Parse TimeClock Plus HTML
+async function parseTcpHtml(fileText) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(fileText, "text/html");
+  const h2 = doc.querySelector("h2")?.textContent || "";
+  const m = h2.match(/(\d{1,2}\/\d{1,2}\/\d{4}).*?(\d{1,2}\/\d{1,2}\/\d{4})/);
+  let periodEnd = "";
+  if (m) {
+    const end = new Date(m[2]);
+    if (!Number.isNaN(end.getTime())) periodEnd = end.toISOString().slice(0, 10);
+  }
+
+  const end = periodEnd ? new Date(periodEnd + "T00:00:00") : null;
+  const weekdays = [];
+  if (end) {
+    const mon = new Date(end);
+    mon.setDate(end.getDate() - 5);
+    for (let i = 0; i < 5; i++) {
+      const d = new Date(mon);
+      d.setDate(mon.getDate() + i);
+      const md = (d.getMonth() + 1) + "/" + d.getDate();
+      const label = d.toLocaleString(undefined, { day: "2-digit", month: "short" }).replace(" ", "-");
+      weekdays.push({ date: d.toISOString().slice(0, 10), md, label });
+    }
+  }
+
+  const mainTable = doc.querySelector("div.center > table");
+  const trs = mainTable ? Array.from(mainTable.querySelectorAll("tr")) : [];
+
+  let current = null;
+  const data = new Map();
+
+  for (const tr of trs) {
+    const nameBold = tr.querySelector('td[colspan="15"] b');
+    if (nameBold) {
+      current = nameBold.textContent.trim();
+      if (!data.has(current)) data.set(current, { days: new Map(), title: "" });
+      continue;
+    }
+    if (!current) continue;
+
+    const tds = Array.from(tr.querySelectorAll(":scope > td"));
+    if (tds.length === 15) {
+      const inDate = tds[3].textContent.trim();
+      const jobCode = tds[7].textContent.trim();
+      const hoursText = tds[9].textContent.trim();
+      const hours = Number(hoursText);
+      if (!inDate || Number.isNaN(hours)) continue;
+
+      const obj = data.get(current);
+
+      if (jobCode && /^\d+-/.test(jobCode)) {
+        if (!obj._titleCounts) obj._titleCounts = {};
+        obj._titleCounts[jobCode] = (obj._titleCounts[jobCode] || 0) + 1;
+      }
+
+      obj.days.set(inDate, (obj.days.get(inDate) || 0) + hours);
+    }
+  }
+
+  for (const [rawName, obj] of data.entries()) {
+    if (obj && obj._titleCounts && !obj.title) {
+      let best = "";
+      let bestN = -1;
+      for (const [k, v] of Object.entries(obj._titleCounts)) {
+        if (v > bestN) { best = k; bestN = v; }
+      }
+      obj.title = best || "";
+    }
+    if (obj) delete obj._titleCounts;
+  }
+
+  function toLastFirst(fullName) {
+    const parts = String(fullName || "").trim().split(/\s+/).filter(Boolean);
+    if (parts.length <= 1) return fullName;
+    const last = parts[parts.length - 1];
+    const first = parts.slice(0, -1).join(" ");
+    return `${last}, ${first}`;
+  }
+
+  const rows = [];
+  for (const [rawName, obj] of data.entries()) {
+    const dayMap = obj.days;
+    const days = {};
+    for (const w of weekdays) {
+      const val = dayMap.get(w.md) || 0;
+      days[w.md] = val ? Math.round(val * 100) / 100 : "";
+    }
+    rows.push({ rawName, name: toLastFirst(rawName), title: obj.title || "", days, note: "" });
+  }
+  rows.sort((a, b) => a.name.localeCompare(b.name));
+  return { periodEnd, weekdays, rows };
+}
+
+// Handle file upload
+async function handleFile(file) {
+  updateStatus(`Parsing ${file.name}...`, false);
+  const text = await file.text();
+  try {
+    const model = await parseTcpHtml(text);
+    window._model = model;
+    buildGrid(model);
+    updateStatus(`Parsed ${file.name} successfully (${model.rows.length} employees).`, true);
+  } catch (err) {
+    console.error(err);
+    updateStatus("Could not parse file. Make sure it is a TimeClock Plus HTML Payroll Detail report.", false);
+  }
+}
+
+// Update status bar
+function updateStatus(message, success = false) {
+  const statusBar = document.getElementById("statusBar");
+  const statusText = document.getElementById("statusText");
+  statusText.textContent = message;
+  statusBar.className = success ? "status-bar success" : "status-bar";
+}
+
+// Event listeners
+const dropZone = document.getElementById("dropZone");
+const fileInput = document.getElementById("fileInput");
+
+dropZone.addEventListener("click", () => fileInput.click());
+
+dropZone.addEventListener("dragover", (e) => {
+  e.preventDefault();
+  dropZone.classList.add("dragover");
+});
+
+dropZone.addEventListener("dragleave", () => {
+  dropZone.classList.remove("dragover");
+});
+
+dropZone.addEventListener("drop", async (e) => {
+  e.preventDefault();
+  dropZone.classList.remove("dragover");
+  const f = e.dataTransfer.files && e.dataTransfer.files[0];
+  if (f) await handleFile(f);
+});
+
+fileInput.addEventListener("change", async () => {
+  const f = fileInput.files && fileInput.files[0];
+  if (f) await handleFile(f);
+});
+
+document.getElementById("exportWps").addEventListener("click", exportWpsTemplateCsv);
+document.getElementById("exportWpsPretty").addEventListener("click", exportWpsTemplateFormatted);
+document.getElementById("exportEib").addEventListener("click", exportEibCsv);
+
+document.getElementById("resetBtn").addEventListener("click", () => {
+  window._model = demo;
+  buildGrid(demo);
+  updateStatus("Reset to demo data.", false);
+});
+
+// Initialize
+buildGrid(demo);
+</script>
+</body>
+</html>
