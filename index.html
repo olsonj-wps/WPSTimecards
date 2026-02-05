@@ -974,7 +974,12 @@ async function parseTcpHtml(fileText) {
     }
     rows.push({ rawName, name: toLastFirst(rawName), title: obj.title || "", days, note: "" });
   }
-  rows.sort((a, b) => a.name.localeCompare(b.name));
+  // Sort by title first (A-Z), then by name (A-Z) within each title group
+  rows.sort((a, b) => {
+    const titleCompare = (a.title || "").localeCompare(b.title || "");
+    if (titleCompare !== 0) return titleCompare;
+    return a.name.localeCompare(b.name);
+  });
   return { periodEnd, weekdays, rows };
 }
 
