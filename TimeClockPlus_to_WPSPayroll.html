@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TimeClock Plus → WPS 6-Hour Drivers Time Sheet (Mockup)</title>
+<style>
+  :root {
+    --grid: #1f1f1f;
+    --thin: #2e2e2e;
+    --bg: #ffffff;
+    --font: Arial, Helvetica, sans-serif;
+  }
+  body { font-family: var(--font); background: #fff; margin: 18px; }
+  .wrap { max-width: 1500px; margin: 0 auto; }
+  .controls {
+    border: 1px solid #c9c9c9;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 14px;
+  }
+  .drop {
+    border: 2px dashed #c9c9c9;
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+    margin-bottom: 10px;
+  }
+  .drop.dragover { outline: 3px solid #000; outline-offset: 2px; }
+  .btns { display:flex; gap:8px; flex-wrap:wrap; }
+  button {
+    padding: 8px 10px;
+    border: 1px solid #c9c9c9;
+    border-radius: 8px;
+    background: #fff;
+    cursor: pointer;
+  }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .status { font-size: 12px; color:#444; margin-top:8px; }
+  .sheet {
+    border: 2px solid var(--grid);
+    overflow: auto;
+    background: var(--bg);
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 1350px;
+  }
+  td {
+    border: 1px solid var(--thin);
+    padding: 6px 8px;
+    font-size: 16px;
+    vertical-align: middle;
+    background: #fff;
+  }
+  .a-col { width: 36px; }
+  .name-col { width: 360px; }
+  .sep-col { width: 22px; background:#fff; }
+  .day-col { width: 150px; }
+  .notes-col { width: 360px; }
+  .center { text-align:center; }
+  .right { text-align:right; }
+  .bold { font-weight:700; }
+  .tinytitle { font-weight:700; font-size: 18px; }
+  .title { font-weight:700; font-size: 28px; letter-spacing: 0.4px; }
+  .subtitle { font-weight:700; font-size: 24px; }
+  .biglabel { font-size: 28px; }
+  .datehdr { font-weight:700; font-size: 22px; }
+  .namehdr { font-size: 26px; }
+  .check {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+  }
+  input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+  }
+  input.hours {
+    width: 78px;
+    font-size: 14px;
+    padding: 4px 6px;
+    text-align: right;
+  }
+  textarea {
+    width: 100%;
+    min-height: 28px;
+    resize: vertical;
+    font-family: var(--font);
+    font-size: 14px;
+    padding: 4px 6px;
+    box-sizing: border-box;
+  }
+  .topmerge td {
+    border-left: none;
+    border-right: none;
+  }
+  .topmerge td:first-child { border-left: 1px solid var(--thin); }
+  .topmerge td:last-child { border-right: 1px solid var(--thin); }
+  .thick-bottom td { border-bottom: 2px solid var(--grid); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="controls">
+    <div class="drop" id="drop">
+      <strong>Step 1:</strong> Drop a TimeClock Plus “Payroll Detail” HTML file here (or click to select)
+      <div class="status">Editable hours + per-row comments. Exports include comments and sign-off lines.</div>
+      <input id="file" type="file" accept=".html,.htm,text/html" style="display:none" />
+    </div>
+    <div class="btns">
+      <button id="exportWps" disabled>Step 3: Export WPS Template CSV</button>
+      <button id="exportEib" disabled>Step 3: Export Workday EIB CSV</button>
+      <button id="reset">Reset to demo</button>
+    </div>
+    <div id="status" class="status">Loaded demo data from the sample report.</div>
+  </div>
+
+  <div class="sheet">
+    <table id="grid"></table>
+  </div>
+</div>
+
+<script>
+const demo = {"periodEnd": "2026-01-31", "weekdays": [{"date": "2026-01-26", "md": "1/26", "label": "26-Jan"}, {"date": "2026-01-27", "md": "1/27", "label": "27-Jan"}, {"date": "2026-01-28", "md": "1/28", "label": "28-Jan"}, {"date": "2026-01-29", "md": "1/29", "label": "29-Jan"}, {"date": "2026-01-30", "md": "1/30", "label": "30-Jan"}], "rows": [{"name": "Abban, Eric", "rawName": "Eric Abban", "days": {"1/26": "", "1/27": "", "1/28": 10.84, "1/29": 11.02, "1/30": ""}, "note": ""}, {"name": "Abban, Sarah", "rawName": "Sarah Abban", "days": {"1/26": "", "1/27": "", "1/28": 10.62, "1/29": 8.94, "1/30": ""}, "note": ""}, {"name": "Acevedo, Jessica", "rawName": "Jessica Acevedo", "days": {"1/26": "", "1/27": "", "1/28": 10.93, "1/29": 10.8, "1/30": ""}, "note": ""}, {"name": "Adolphe, Juan", "rawName": "Juan Adolphe", "days": {"1/26": "", "1/27": "", "1/28": 10.38, "1/29": 8.87, "1/30": ""}, "note": ""}, {"name": "Adorno, Ezequiel", "rawName": "Ezequiel Adorno", "days": {"1/26": "", "1/27": "", "1/28": 9.9, "1/29": 9.04, "1/30": ""}, "note": ""}, {"name": "Afolabi, Nadia", "rawName": "Nadia Afolabi", "days": {"1/26": "", "1/27": "", "1/28": 11.38, "1/29": 9.11, "1/30": ""}, "note": ""}, {"name": "Africa, Robino", "rawName": "Robino Africa", "days": {"1/26": "", "1/27": "", "1/28": 11.35, "1/29": 8.07, "1/30": ""}, "note": ""}, {"name": "Aguiar, Angelica", "rawName": "Angelica Aguiar", "days": {"1/26": "", "1/27": "", "1/28": 6.92, "1/29": "", "1/30": ""}, "note": ""}, {"name": "Aguilar, Leonel", "rawName": "Leonel Aguilar", "days": {"1/26": "", "1/27": "", "1/28": 10.6, "1/29": 12.92, "1/30": ""}, "note": ""}, {"name": "Aguirre, Elda", "rawName": "Elda Aguirre", "days": {"1/26": "", "1/27": "", "1/28": 12.15, "1/29": 10.75, "1/30": ""}, "note": ""}, {"name": "Alba, Jenny", "rawName": "Jenny Alba", "days": {"1/26": "", "1/27": "", "1/28": "", "1/29": 9.22, "1/30": ""}, "note": ""}, {"name": "Alba, Onelly", "rawName": "Onelly Alba", "days": {"1/26": "", "1/27": "", "1/28": 6.82, "1/29": 6.62, "1/30": ""}, "note": ""}, {"name": "Perez, Yuly Alfonso", "rawName": "Yuly Alfonso Perez", "days": {"1/26": "", "1/27": "", "1/28": 11.4, "1/29": 10.13, "1/30": ""}, "note": ""}, {"name": "Alvarado, Carmelo", "rawName": "Carmelo Alvarado", "days": {"1/26": "", "1/27": "", "1/28": 9.74, "1/29": 9.43, "1/30": ""}, "note": ""}, {"name": "Alvarenga, Ena", "rawName": "Ena Alvarenga", "days": {"1/26": "", "1/27": "", "1/28": 10.47, "1/29": 9.53, "1/30": ""}, "note": ""}, {"name": "Amantea, Mary Kathryn", "rawName": "Mary Kathryn Amantea", "days": {"1/26": "", "1/27": "", "1/28": 11.41, "1/29": "", "1/30": ""}, "note": ""}, {"name": "Ameur, Mohammed", "rawName": "Mohammed Ameur", "days": {"1/26": 6.65, "1/27": 5.53, "1/28": 12.38, "1/29": 9.6, "1/30": ""}, "note": ""}, {"name": "Andino, Keila", "rawName": "Keila Andino", "days": {"1/26": "", "1/27": "", "1/28": 8.0, "1/29": 6.89, "1/30": ""}, "note": ""}, {"name": "Ansah-Attah, Derrick", "rawName": "Derrick Ansah-Attah", "days": {"1/26": "", "1/27": "", "1/28": 11.95, "1/29": 11.4, "1/30": ""}, "note": ""}, {"name": "Anziani, Santa", "rawName": "Santa Anziani", "days": {"1/26": "", "1/27": "", "1/28": "", "1/29": 10.85, "1/30": ""}, "note": ""}, {"name": "Aponte, Adrianna", "rawName": "Adrianna Aponte", "days": {"1/26": "", "1/27": "", "1/28": 10.28, "1/29": 6.82, "1/30": ""}, "note": ""}, {"name": "Archambault, Chelsea", "rawName": "Chelsea Archambault", "days": {"1/26": "", "1/27": "", "1/28": 10.38, "1/29": 9.45, "1/30": ""}, "note": ""}, {"name": "Archambault, Lynn", "rawName": "Lynn Archambault", "days": {"1/26": "", "1/27": "", "1/28": 8.38, "1/29": "", "1/30": ""}, "note": ""}, {"name": "Arevalo, Veronica", "rawName": "Veronica Arevalo", "days": {"1/26": "", "1/27": "", "1/28": 10.05, "1/29": 9.85, "1/30": ""}, "note": ""}, {"name": "Arrell, Susan", "rawName": "Susan Arrell", "days": {"1/26": "", "1/27": "", "1/28": 10.1, "1/29": 8.44, "1/30": ""}, "note": ""}, {"name": "Atchue, Matthew", "rawName": "Matthew Atchue", "days": {"1/26": "", "1/27": "", "1/28": 7.18, "1/29": 7.75, "1/30": ""}, "note": ""}, {"name": "Augustin, Nasha", "rawName": "Nasha Augustin", "days": {"1/26": "", "1/27": "", "1/28": 9.44, "1/29": 7.25, "1/30": ""}, "note": ""}, {"name": "Avushka, Nikollaq", "rawName": "Nikollaq Avushka", "days": {"1/26": "", "1/27": "", "1/28": 11.38, "1/29": 9.53, "1/30": ""}, "note": ""}, {"name": "Ayala, Juan", "rawName": "Juan Ayala", "days": {"1/26": "", "1/27": "", "1/28": 10.89, "1/29": 10.72, "1/30": ""}, "note": ""}, {"name": "Bailey, Diane", "rawName": "Diane Bailey", "days": {"1/26": "", "1/27": "", "1/28": 11.25, "1/29": 9.05, "1/30": ""}, "note": ""}, {"name": "Baldwin, Tracy", "rawName": "Tracy Baldwin", "days": {"1/26": "", "1/27": "", "1/28": 9.88, "1/29": 8.08, "1/30": ""}, "note": ""}, {"name": "Balla, Alked", "rawName": "Alked Balla", "days": {"1/26": "", "1/27": "", "1/28": 9.74, "1/29": 8.36, "1/30": ""}, "note": ""}, {"name": "Bautista, Delmi", "rawName": "Delmi Bautista", "days": {"1/26": 5.7, "1/27": 5.33, "1/28": 9.65, "1/29": 10.27, "1/30": ""}, "note": ""}, {"name": "Beaucage, Scott", "rawName": "Scott Beaucage", "days": {"1/26": "", "1/27": "", "1/28": 6.57, "1/29": 6.77, "1/30": ""}, "note": ""}, {"name": "Benito, Juan", "rawName": "Juan Benito", "days": {"1/26": "", "1/27": "", "1/28": 9.82, "1/29": 7.97, "1/30": ""}, "note": ""}, {"name": "Bennett, Cherrol", "rawName": "Cherrol Bennett", "days": {"1/26": "", "1/27": "", "1/28": 12.42, "1/29": 11.42, "1/30": ""}, "note": ""}, {"name": "Benoit, Jeffrey", "rawName": "Jeffrey Benoit", "days": {"1/26": "", "1/27": "", "1/28": "", "1/29": 8.4, "1/30": ""}, "note": ""}, {"name": "Besaw, Pamela", "rawName": "Pamela Besaw", "days": {"1/26": "", "1/27": "", "1/28": 10.7, "1/29": 9.16, "1/30": ""}, "note": ""}, {"name": "Bissonnette, Lori", "rawName": "Lori Bissonnette", "days": {"1/26": "", "1/27": "", "1/28": 10.01, "1/29": 10.08, "1/30": ""}, "note": ""}, {"name": "Borrero, Jordan", "rawName": "Jordan Borrero", "days": {"1/26": "", "1/27": "", "1/28": 8.88, "1/29": 9.4, "1/30": ""}, "note": ""}, {"name": "Bourget, Constance", "rawName": "Constance Bourget", "days": {"1/26": "", "1/27": "", "1/28": 11.63, "1/29": 10.96, "1/30": ""}, "note": ""}, {"name": "Bourogaa, Youssef", "rawName": "Youssef Bourogaa", "days": {"1/26": "", "1/27": "", "1/28": 10.51, "1/29": 10.83, "1/30": ""}, "note": ""}, {"name": "Bradford, Eric", "rawName": "Eric Bradford", "days": {"1/26": "", "1/27": "", "1/28": 10.18, "1/29": 9.55, "1/30": ""}, "note": ""}, {"name": "Brady, Alexys", "rawName": "Alexys Brady", "days": {"1/26": 8.0, "1/27": 8.0, "1/28": 8.0, "1/29": 8.0, "1/30": 8.0}, "note": ""}, {"name": "Briggs, Don", "rawName": "Don Briggs", "days": {"1/26": "", "1/27": "", "1/28": 11.1, "1/29": 9.3, "1/30": ""}, "note": ""}, {"name": "Brito, Viviana", "rawName": "Viviana Brito", "days": {"1/26": "", "1/27": "", "1/28": 11.02, "1/29": 9.3, "1/30": ""}, "note": ""}, {"name": "Bryan, Marianne", "rawName": "Marianne Bryan", "days": {"1/26": 8.0, "1/27": 8.0, "1/28": 8.0, "1/29": 8.0, "1/30": 8.0}, "note": ""}, {"name": "Buckley, Ryan", "rawName": "Ryan Buckley", "days": {"1/26": "", "1/27": "", "1/28": 9.81, "1/29": 9.73, "1/30": ""}, "note": ""}, {"name": "Burgos, Luis", "rawName": "Luis Burgos", "days": {"1/26": 5.55, "1/27": "", "1/28": 7.9, "1/29": 6.65, "1/30": ""}, "note": ""}, {"name": "Burgos, Sandraliz", "rawName": "Sandraliz Burgos", "days": {"1/26": "", "1/27": "", "1/28": 10.28, "1/29": 3.88, "1/30": ""}, "note": ""}, {"name": "Burns, Tara", "rawName": "Tara Burns", "days": {"1/26": "", "1/27": "", "1/28": 9.62, "1/29": 8.3, "1/30": ""}, "note": ""}, {"name": "Caban, Jeannette", "rawName": "Jeannette Caban", "days": {"1/26": "", "1/27": "", "1/28": 10.51, "1/29": 10.09, "1/30": ""}, "note": ""}, {"name": "Cabrera, Erika", "rawName": "Erika Cabrera", "days": {"1/26": "", "1/27": "", "1/28": 10.75, "1/29": 10.33, "1/30": ""}, "note": ""}, {"name": "Calle, Natali", "rawName": "Natali Calle", "days": {"1/26": "", "1/27": "", "1/28": 9.1, "1/29": 4.12, "1/30": ""}, "note": ""}, {"name": "Camacho, Alisha", "rawName": "Alisha Camacho", "days": {"1/26": "", "1/27": "", "1/28": 10.15, "1/29": 9.31, "1/30": ""}, "note": ""}, {"name": "Camacho, Jonathan", "rawName": "Jonathan Camacho", "days": {"1/26": "", "1/27": "", "1/28": 11.75, "1/29": 4.4, "1/30": ""}, "note": ""}, {"name": "Cameron, Elaine", "rawName": "Elaine Cameron", "days": {"1/26": "", "1/27": "", "1/28": "", "1/29": 10.44, "1/30": ""}, "note": ""}, {"name": "Caraballo, Stephanie", "rawName": "Stephanie Caraballo", "days": {"1/26": "", "1/27": "", "1/28": 9.52, "1/29": 8.41, "1/30": ""}, "note": ""}, {"name": "Carlberg, Rebecca", "rawName": "Rebecca Carlberg", "days": {"1/26": 5.0, "1/27": 5.1, "1/28": 6.65, "1/29": 7.67, "1/30": 4.68}, "note": ""}, {"name": "Carrasquillo, Angel", "rawName": "Angel Carrasquillo", "days": {"1/26": 8.0, "1/27": 8.0, "1/28": 8.0, "1/29": 8.0, "1/30": 8.0}, "note": ""}, {"name": "Carrasquillo, Ismael", "rawName": "Ismael Carrasquillo", "days": {"1/26": 8.0, "1/27": 8.0, "1/28": 8.0, "1/29": 8.0, "1/30": 8.0}, "note": ""}, {"name": "Carrasquillo, Luis", "rawName": "Luis Carrasquillo", "days": {"1/26": "", "1/27": "", "1/28": 8.12, "1/29": 7.65, "1/30": ""}, "note": ""}, {"name": "Castillo, Brinet", "rawName": "Brinet Castillo", "days": {"1/26": "", "1/27": "", "1/28": 3.73, "1/29": 8.34, "1/30": ""}, "note": ""}, {"name": "Castro, Jared", "rawName": "Jared Castro", "days": {"1/26": "", "1/27": "", "1/28": 8.73, "1/29": 8.56, "1/30": ""}, "note": ""}, {"name": "Cavanaugh, Dawn", "rawName": "Dawn Cavanaugh", "days": {"1/26": 8.0, "1/27": 8.02, "1/28": 11.35, "1/29": 9.1, "1/30": 8.32}, "note": ""}, {"name": "Chaari, Abderahim", "rawName": "Abderahim Chaari", "days": {"1/26": "", "1/27": "", "1/28": 10.97, "1/29": 9.2, "1/30": ""}, "note": ""}, {"name": "Chacon, Nilsa", "rawName": "Nilsa Chacon", "days": {"1/26": "", "1/27": "", "1/28": 3.97, "1/29": 8.6, "1/30": ""}, "note": ""}, {"name": "Chalas, Yuberkys", "rawName": "Yuberkys Chalas", "days": {"1/26": "", "1/27": "", "1/28": 8.4, "1/29": 7.82, "1/30": ""}, "note": ""}, {"name": "Chin, Robert", "rawName": "Robert Chin", "days": {"1/26": 6.67, "1/27": 5.33, "1/28": 8.63, "1/29": 10.34, "1/30": ""}, "note": ""}, {"name": "Choruzek, Stanley", "rawName": "Stanley Choruzek", "days": {"1/26": 5.8, "1/27": 4.22, "1/28": 9.31, "1/29": 9.95, "1/30": ""}, "note": ""}, {"name": "Collazo, Efrain", "rawName": "Efrain Collazo", "days": {"1/26": "", "1/27": "", "1/28": 8.04, "1/29": 7.75, "1/30": ""}, "note": ""}, {"name": "Collins, Kerri", "rawName": "Kerri Collins", "days": {"1/26": 8.0, "1/27": 8.0, "1/28": 8.0, "1/29": 8.0, "1/30": 8.0}, "note": ""}, {"name": "Colon, Judith", "rawName": "Judith Colon", "days": {"1/26": "", "1/27": "", "1/28": 10.54, "1/29": 10.52, "1/30": ""}, "note": ""}, {"name": "Sandoval, Leonardo Colon", "rawName": "Leonardo Colon Sandoval", "days": {"1/26": "", "1/27": "", "1/28": 10.37, "1/29": 6.41, "1/30": ""}, "note": ""}, {"name": "Contonio, Jodi", "rawName": "Jodi Contonio", "days": {"1/26": "", "1/27": "", "1/28": 9.81, "1/29": 7.14, "1/30": 6.43}, "note": ""}, {"name": "Contreras, Daniel", "rawName": "Daniel Contreras", "days": {"1/26": "", "1/27": "", "1/28": 7.11, "1/29": 5.6, "1/30": ""}, "note": ""}, {"name": "Cordones, Eustacia", "rawName": "Eustacia Cordones", "days": {"1/26": "", "1/27": "", "1/28": 9.65, "1/29": 9.73, "1/30": ""}, "note": ""}, {"name": "Correa, Elizabeth", "rawName": "Elizabeth Correa", "days": {"1/26": "", "1/27": "", "1/28": 8.43, "1/29": 8.47, "1/30": ""}, "note": ""}, {"name": "Cortez, Juan", "rawName": "Juan Cortez", "days": {"1/26": "", "1/27": "", "1/28": 11.87, "1/29": 8.02, "1/30": ""}, "note": ""}, {"name": "Costa, Welley", "rawName": "Welley Costa", "days": {"1/26": "", "1/27": "", "1/28": 6.5, "1/29": 6.55, "1/30": ""}, "note": ""}]};
+
+function fmtPeriodEnd(iso) {
+  if (!iso) return "";
+  const d = new Date(iso + "T00:00:00");
+  return `${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}`;
+}
+
+function buildGrid(model) {
+  const grid = document.getElementById("grid");
+  grid.innerHTML = "";
+
+  const mdCols = (model.weekdays || []).map(w => w.md);
+  const lblCols = (model.weekdays || []).map(w => w.label);
+
+  function addRow(cells) {
+    const tr = document.createElement("tr");
+    for (const cell of cells) {
+      const td = document.createElement("td");
+      if (cell.colspan) td.colSpan = cell.colspan;
+      td.className = cell.className || "";
+      td.innerHTML = cell.html || "";
+      tr.appendChild(td);
+    }
+    grid.appendChild(tr);
+    return tr;
+  }
+
+  // NEW Row 0: "Worcester Public Schools" (mixed case) to push everything down one row
+  addRow([
+    { className: "a-col", html: "" },
+    { className: "center tinytitle", colspan: 10, html: "Worcester Public Schools" },
+    { className: "notes-col", html: "" }
+  ]).classList.add("topmerge");
+
+  // Row 1: main header
+  addRow([
+    { className: "a-col", html: "" },
+    { className: "center title bold", colspan: 10, html: "WORCESTER PUBLIC SCHOOLS" },
+    { className: "notes-col", html: "" }
+  ]).classList.add("topmerge");
+
+  // Row 2: subtitle
+  addRow([
+    { className: "a-col", html: "" },
+    { className: "center subtitle bold", colspan: 10, html: "6-HOUR DRIVERS TIME SHEET" },
+    { className: "notes-col", html: "" }
+  ]).classList.add("topmerge");
+
+  // Row 3: For the Period Ending
+  addRow([
+    { className: "a-col", html: "" },
+    { className: "right biglabel", html: "For the Period Ending:" },
+    { className: "center biglabel bold", html: fmtPeriodEnd(model.periodEnd) },
+    { className: "sep-col", html: "" },
+    { className: "sep-col", html: "" },
+    { className: "sep-col", html: "" },
+    { className: "sep-col", html: "" },
+    { className: "sep-col", html: "" },
+    { className: "sep-col", html: "" },
+    { className: "sep-col", html: "" },
+    { className: "sep-col", html: "" },
+    { className: "notes-col", html: "" }
+  ]).classList.add("thick-bottom");
+
+  // Row 4: Column headers
+  addRow([
+    { className: "a-col", html: "" },
+    { className: "center namehdr bold name-col", html: "Full Name&nbsp;&nbsp;(Surname First)" },
+    { className: "center datehdr bold day-col", html: lblCols[0] || "" },
+    { className: "sep-col", html: "" },
+    { className: "center datehdr bold day-col", html: lblCols[1] || "" },
+    { className: "sep-col", html: "" },
+    { className: "center datehdr bold day-col", html: lblCols[2] || "" },
+    { className: "sep-col", html: "" },
+    { className: "center datehdr bold day-col", html: lblCols[3] || "" },
+    { className: "sep-col", html: "" },
+    { className: "center datehdr bold day-col", html: lblCols[4] || "" },
+    { className: "notes-col", html: "" }
+  ]).classList.add("thick-bottom");
+
+  // Data rows
+  for (const r of (model.rows || [])) {
+    const safeName = (r.name || "").replaceAll('"', "&quot;");
+    const note = (r.note || "").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+
+    const dayCells = [];
+    for (let i=0; i<5; i++) {
+      const md = mdCols[i] || "";
+      const valRaw = (r.days && md && r.days[md] !== undefined) ? r.days[md] : "";
+      const hasVal = (valRaw !== "" && valRaw !== 0 && valRaw !== null && valRaw !== undefined);
+      const display = hasVal ? Number(valRaw).toFixed(2) : "";
+      dayCells.push({
+        className: "center day-col",
+        html: `
+          <div class="check">
+            <input type="checkbox" data-name="${safeName}" data-md="${md}" ${hasVal ? "checked" : ""}>
+            <input class="hours" type="number" step="0.01" min="0" value="${display}" data-hours-for="${safeName}" data-md="${md}" placeholder="">
+          </div>
+        `
+      });
+    }
+
+    addRow([
+      { className: "a-col", html: "" },
+      { className: "center name-col", html: safeName },
+      dayCells[0],
+      { className: "sep-col", html: "" },
+      dayCells[1],
+      { className: "sep-col", html: "" },
+      dayCells[2],
+      { className: "sep-col", html: "" },
+      dayCells[3],
+      { className: "sep-col", html: "" },
+      dayCells[4],
+      { className: "notes-col", html: `<textarea data-note-for="${safeName}" placeholder="Write-in comments...">${note}</textarea>` }
+    ]);
+  }
+
+  // Sign-off section
+  addRow([
+    { className: "a-col", html: "" },
+    { className: "bold", html: "I certify that this time slip is correct:" },
+    { colspan: 10, html: "" }
+  ]);
+
+  addRow([
+    { className: "a-col", html: "" },
+    { className: "bold", html: "Supervisor" },
+    { colspan: 10, html: "" }
+  ]);
+
+  document.getElementById("exportWps").disabled = false;
+  document.getElementById("exportEib").disabled = false;
+}
+
+function currentState() {
+  const grid = document.getElementById("grid");
+  const mdCols = (window._model?.weekdays || []).map(w => w.md);
+
+  // After 5 header rows (new extra row)
+  const trs = Array.from(grid.querySelectorAll("tr")).slice(5);
+  const out = [];
+  for (const tr of trs) {
+    const tds = tr.querySelectorAll("td");
+    if (!tds.length) continue;
+    const firstText = (tds[1]?.innerText || "").trim();
+    if (firstText.startsWith("I certify")) break;
+
+    const name = (tds[1]?.innerText || "").trim();
+    const noteEl = tr.querySelector(`textarea[data-note-for]`);
+    const note = noteEl ? noteEl.value : "";
+
+    const days = {};
+    const dayIdx = [2,4,6,8,10];
+    for (let i=0; i<5; i++) {
+      const md = mdCols[i];
+      const cell = tds[dayIdx[i]];
+      const cb = cell.querySelector('input[type="checkbox"]');
+      const inp = cell.querySelector('input.hours');
+      const raw = inp ? inp.value.trim() : "";
+      const val = raw ? Number(raw) : "";
+      // If user typed a value but didn't check, auto-check it for export convenience
+      const effectiveChecked = cb ? (cb.checked || (raw !== "" && Number(raw) > 0)) : false;
+      days[md] = effectiveChecked ? val : "";
+    }
+    out.push({ name, note, days });
+  }
+  return { mdCols, rows: out };
+}
+
+function downloadCsv(filename, text) {
+  const blob = new Blob([text], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function exportWpsTemplateCsv() {
+  const st = currentState();
+  const header = ["", "Full Name  (Surname First)",
+    st.mdCols[0] || "", "", st.mdCols[1] || "", "", st.mdCols[2] || "", "", st.mdCols[3] || "", "", st.mdCols[4] || "",
+    "Notes"
+  ];
+  const lines = [];
+  // Extra header row requested
+  lines.push(["", "Worcester Public Schools"].map(x => `"${String(x).replaceAll('"','""')}"`).join(","));
+  lines.push(header.map(x => `"${String(x).replaceAll('"','""')}"`).join(","));
+
+  for (const r of st.rows) {
+    const vals = [
+      "",
+      r.name,
+      r.days[st.mdCols[0]] === "" ? "" : Number(r.days[st.mdCols[0]]).toFixed(2),
+      "",
+      r.days[st.mdCols[1]] === "" ? "" : Number(r.days[st.mdCols[1]]).toFixed(2),
+      "",
+      r.days[st.mdCols[2]] === "" ? "" : Number(r.days[st.mdCols[2]]).toFixed(2),
+      "",
+      r.days[st.mdCols[3]] === "" ? "" : Number(r.days[st.mdCols[3]]).toFixed(2),
+      "",
+      r.days[st.mdCols[4]] === "" ? "" : Number(r.days[st.mdCols[4]]).toFixed(2),
+      r.note || ""
+    ];
+    lines.push(vals.map(x => `"${String(x).replaceAll('"','""')}"`).join(","));
+  }
+
+  lines.push(["", "I certify that this time slip is correct:"].map(x => `"${x}"`).join(","));
+  lines.push(["", "Supervisor"].map(x => `"${x}"`).join(","));
+
+  downloadCsv("wps_6hour_drivers_timesheet_template.csv", lines.join("\n"));
+}
+
+function exportEibCsv() {
+  const st = currentState();
+  const header = ["Employee", "Date", "Hours", "Comment"];
+  const lines = [header.join(",")];
+  const year = (window._model?.periodEnd ? new Date(window._model.periodEnd + "T00:00:00").getFullYear() : new Date().getFullYear());
+
+  for (const r of st.rows) {
+    for (const md of st.mdCols) {
+      const v = r.days[md];
+      if (v === "" || v === 0 || v === null || v === undefined) continue;
+      const [m,d] = md.split("/").map(Number);
+      const iso = new Date(year, m-1, d).toISOString().slice(0,10);
+      const row = [r.name, iso, Number(v).toFixed(2), r.note || ""];
+      lines.push(row.map(x => `"${String(x).replaceAll('"','""')}"`).join(","));
+    }
+  }
+  downloadCsv("workday_eib_export.csv", lines.join("\n"));
+}
+
+async function parseTcpHtml(fileText) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(fileText, "text/html");
+  const h2 = doc.querySelector("h2")?.textContent || "";
+  const m = h2.match(/(\d{1,2}\/\d{1,2}\/\d{4}).*?(\d{1,2}\/\d{1,2}\/\d{4})/);
+  let periodEnd = "";
+  if (m) {
+    const end = new Date(m[2]);
+    if (!Number.isNaN(end.getTime())) periodEnd = end.toISOString().slice(0,10);
+  }
+
+  const end = periodEnd ? new Date(periodEnd + "T00:00:00") : null;
+  const weekdays = [];
+  if (end) {
+    const mon = new Date(end);
+    mon.setDate(end.getDate() - 5);
+    for (let i=0; i<5; i++) {
+      const d = new Date(mon);
+      d.setDate(mon.getDate() + i);
+      const md = (d.getMonth()+1) + "/" + d.getDate();
+      const label = d.toLocaleString(undefined, { day: "2-digit", month: "short" }).replace(" ", "-");
+      weekdays.push({ date: d.toISOString().slice(0,10), md, label });
+    }
+  }
+
+  const mainTable = doc.querySelector("div.center > table");
+  // IMPORTANT FIX: browsers insert <tbody>, so we must query ALL trs under the table
+  const trs = mainTable ? Array.from(mainTable.querySelectorAll("tr")) : [];
+
+  let current = null;
+  const data = new Map(); // rawName -> Map(md->hours)
+
+  for (const tr of trs) {
+    const nameBold = tr.querySelector('td[colspan="15"] b');
+    if (nameBold) {
+      current = nameBold.textContent.trim();
+      if (!data.has(current)) data.set(current, new Map());
+      continue;
+    }
+    if (!current) continue;
+
+    const tds = Array.from(tr.querySelectorAll(":scope > td"));
+    if (tds.length === 15) {
+      const inDate = tds[3].textContent.trim(); // M/D
+      const hoursText = tds[9].textContent.trim();
+      const hours = Number(hoursText);
+      if (!inDate || Number.isNaN(hours)) continue;
+      const m1 = data.get(current);
+      m1.set(inDate, (m1.get(inDate) || 0) + hours);
+    }
+  }
+
+  function toLastFirst(fullName) {
+    const parts = String(fullName || "").trim().split(/\s+/).filter(Boolean);
+    if (parts.length <= 1) return fullName;
+    const last = parts[parts.length - 1];
+    const first = parts.slice(0, -1).join(" ");
+    return `${last}, ${first}`;
+  }
+
+  const rows = [];
+  for (const [rawName, dayMap] of data.entries()) {
+    const days = {};
+    for (const w of weekdays) {
+      const val = dayMap.get(w.md) || 0;
+      days[w.md] = val ? Math.round(val * 100) / 100 : "";
+    }
+    rows.push({ rawName, name: toLastFirst(rawName), days, note: "" });
+  }
+  rows.sort((a,b) => a.name.localeCompare(b.name));
+  return { periodEnd, weekdays, rows };
+}
+
+const drop = document.getElementById("drop");
+const fileInput = document.getElementById("file");
+drop.addEventListener("click", () => fileInput.click());
+drop.addEventListener("dragover", (e) => { e.preventDefault(); drop.classList.add("dragover"); });
+drop.addEventListener("dragleave", () => drop.classList.remove("dragover"));
+drop.addEventListener("drop", async (e) => {
+  e.preventDefault();
+  drop.classList.remove("dragover");
+  const f = e.dataTransfer.files && e.dataTransfer.files[0];
+  if (f) await handleFile(f);
+});
+fileInput.addEventListener("change", async () => {
+  const f = fileInput.files && fileInput.files[0];
+  if (f) await handleFile(f);
+});
+
+async function handleFile(file) {
+  document.getElementById("status").textContent = "Parsing " + file.name + "...";
+  const text = await file.text();
+  try {
+    const model = await parseTcpHtml(text);
+    window._model = model;
+    buildGrid(model);
+    document.getElementById("status").textContent = "Parsed " + file.name + " (" + model.rows.length + " employees).";
+  } catch (err) {
+    console.error(err);
+    document.getElementById("status").textContent = "Could not parse file. Make sure it is a TimeClock Plus HTML Payroll Detail report.";
+  }
+}
+
+document.getElementById("exportWps").addEventListener("click", exportWpsTemplateCsv);
+document.getElementById("exportEib").addEventListener("click", exportEibCsv);
+document.getElementById("reset").addEventListener("click", () => {
+  window._model = demo;
+  buildGrid(demo);
+  document.getElementById("status").textContent = "Reset to demo data.";
+});
+
+window._model = demo;
+buildGrid(demo);
+</script>
+</body>
+</html>
